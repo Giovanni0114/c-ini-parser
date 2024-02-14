@@ -8,11 +8,9 @@
 #include <string.h>
 #include <stropts.h>
 
-#include "types.c"
-
 #define MAX_BUFF_SIZE 1024
 
-bool detectInputOnStdin() {
+bool detectInputOnStdin(void) {
     int c;
     if (ioctl(0, I_NREAD, &c) == 0 && c > 0) return true;
     return false;
@@ -40,9 +38,9 @@ bool readFile(const char *filename) {
     fclose(file);
 
     return true;
-};
+}
 
-int main() {
+int main(void) {
     if (detectInputOnStdin()) {
         char line[1024];
         while (fgets(line, sizeof(line), stdin)) {
