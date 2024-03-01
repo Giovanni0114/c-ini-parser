@@ -1,5 +1,5 @@
 CFLAGS=-Wall -pedantic -x c
-APIFLAGS=-lulfius -lorcania -lyder
+APIFLAGS=-lulfius -lorcania -lyder -ljansson
 
 all: parser api cli
 
@@ -21,4 +21,4 @@ cli-test:
 	:
 
 api-test:
-	clang $(CFLAGS) -o build/test_api src/api.c -DAPI_TEST $(APIFLAGS)
+	clang $(CFLAGS) -o build/test_api src/api.c src/api/* -DAPI_TEST $(APIFLAGS)

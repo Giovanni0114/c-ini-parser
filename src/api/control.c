@@ -1,20 +1,15 @@
-#pragma once
+#include "control.h"
 
-#include <assert.h>
-#include <ulfius.h>
-
-#include "callbacks.c"
-
-#define PORT 8888
-
-struct _u_instance* _instance;
+int is_error_occured(void) {
+    return instance.status == U_STATUS_ERROR;
+}
 
 int start_api(void) {
-    return ulfius_start_framework(_instance) == U_OK;
+    return ulfius_start_framework(&instance) == U_OK;
 }
 
 int stop_api(void) {
-    return ulfius_stop_framework(_instance) == U_OK;
+    return ulfius_stop_framework(&instance) == U_OK;
 }
 
 int restart_api(void) {
@@ -23,14 +18,24 @@ int restart_api(void) {
     assert(0 && "Not implemented");
 }
 
-int add_endpoint(char *endpoint, Callback callback){
-    return ulfius_add_endpoint_by_val(_instance, "GET", endpoint, NULL, 0, callback, NULL) == U_OK;
+int add_endpoint(char* endpoint, Callback callback) {
+    if (instance.status == U_STATUS_RUNNING) {
+        if (!stop_api()) fprintf(stderr, "add_endpoint(): unable to stop API");
+    }
+
+    int ret = ulfius_add_endpoint_by_val(&instance, "GET", endpoint, NULL, 0, callback, NULL);
+
+    if (instance.status == U_STATUS_STOP) {
+        if (!start_api()) fprintf(stderr, "add_endpoint(): unable to start API");
+    }
+
+    return ret;
 }
 
 void cleanup(void) {
     // runned on atexit
-    ulfius_stop_framework(_instance);
-    ulfius_clean_instance(_instance);
+    ulfius_stop_framework(&instance);
+    ulfius_clean_instance(&instance);
     ulfius_global_close();
 }
 
@@ -40,12 +45,12 @@ int init_api(void) {
         exit(EXIT_FAILURE);
     }
 
-    if (ulfius_init_instance(_instance, PORT, NULL, NULL) != U_OK) {
+    if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
         fprintf(stderr, "Error upon ulfius_init_instance, abort\n");
         exit(EXIT_FAILURE);
     }
 
-    if (ulfius_set_default_endpoint(_instance, default_callback, NULL) != U_OK) {
+    if (ulfius_set_default_endpoint(&instance, default_callback, NULL) != U_OK) {
         fprintf(stderr, "Setting of default callback failed, abort\n");
         exit(EXIT_FAILURE);
     }
