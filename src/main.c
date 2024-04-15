@@ -11,9 +11,8 @@
 #define MAX_BUFF_SIZE 1024
 
 bool detectInputOnStdin(void) {
-    int c;
-    if (ioctl(0, I_NREAD, &c) == 0 && c > 0) return true;
-    return false;
+    int input;
+    return (ioctl(0, I_NREAD, &input) == 0 && input > 0);
 }
 
 bool readFile(const char *filename) {
