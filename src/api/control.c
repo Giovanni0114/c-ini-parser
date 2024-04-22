@@ -1,21 +1,50 @@
 #include "control.h"
+#include "err_messages.h"
 
-int is_error_occured(void) {
+struct _u_instance instance = {0};
+
+int get_status(void) {
+    return instance.status;
+}
+
+int did_error_occured(void) {
     return instance.status == U_STATUS_ERROR;
 }
 
-int start_api(void) {
-    return ulfius_start_framework(&instance) == U_OK;
-}
+int init_api(void) {
+    int res = ulfius_init_instance(&instance, 8080, NULL, NULL);
+    if (res != U_OK) {
+        fprintf(stderr, "Error upon ulfius_init_instance, abort with error code %d\n", res);
+        exit(EXIT_FAILURE);
+    }
 
-int stop_api(void) {
-    return ulfius_stop_framework(&instance) == U_OK;
+    instance.check_utf8 = 0;
+
+    res = ulfius_add_endpoint_by_val(&instance, "GET", "/hello", NULL, 0, &hello_world_callback, NULL);
+    if (res != U_OK) {
+        fprintf(stderr, "Setting of custom callback failed, abort with error code %d\n", res);
+        exit(EXIT_FAILURE);
+    }
+
+    atexit(cleanup);
+
+    return restart_api();
 }
 
 int restart_api(void) {
-    // TODO: here I'm about to add function that will get an pointer to another function,
-    // It will stop API, run function, and then start API.
-    assert(0 && "Not implemented");
+    int res = ulfius_start_framework(&instance);
+    if (res > 0) {
+        fprintf(stderr, "restart_api: %s\n", translate_error_code(res));
+    }
+    return res == U_OK;
+}
+
+int stop_api(void) {
+    int res = ulfius_stop_framework(&instance);
+    if (res > 0) {
+        fprintf(stderr, "stop_api: %s\n", translate_error_code(res));
+    }
+    return res == U_OK;
 }
 
 int add_endpoint(char* endpoint, Callback callback) {
@@ -26,7 +55,7 @@ int add_endpoint(char* endpoint, Callback callback) {
     int ret = ulfius_add_endpoint_by_val(&instance, "GET", endpoint, NULL, 0, callback, NULL);
 
     if (instance.status == U_STATUS_STOP) {
-        if (!start_api()) fprintf(stderr, "add_endpoint(): unable to start API");
+        if (!restart_api()) fprintf(stderr, "add_endpoint(): unable to restart API");
     }
 
     return ret;
@@ -37,25 +66,4 @@ void cleanup(void) {
     ulfius_stop_framework(&instance);
     ulfius_clean_instance(&instance);
     ulfius_global_close();
-}
-
-int init_api(void) {
-    if (ulfius_global_init() != U_OK) {
-        fprintf(stderr, "Error upon ulfius_global_init, abort\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
-        fprintf(stderr, "Error upon ulfius_init_instance, abort\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (ulfius_set_default_endpoint(&instance, default_callback, NULL) != U_OK) {
-        fprintf(stderr, "Setting of default callback failed, abort\n");
-        exit(EXIT_FAILURE);
-    }
-
-    atexit(cleanup);
-
-    return start_api();
 }

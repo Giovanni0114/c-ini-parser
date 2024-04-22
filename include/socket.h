@@ -1,13 +1,4 @@
-#pragma once
-
-#include <assert.h>
-#include <errno.h>
 #include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>

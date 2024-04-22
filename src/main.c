@@ -1,12 +1,12 @@
-#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stropts.h>
+
+#include "control.h"
 
 #define MAX_BUFF_SIZE 1024
 
@@ -47,5 +47,21 @@ int main(void) {
         }
     }
 
-    return readFile("test.ini");
+    if (!init_api()){
+        fprintf(stderr, "unable to start_api\n");
+        return get_status();
+    };
+
+    for (int i = 0; i < 3; i++) {
+        fprintf(stderr, "%d\n", get_status());
+        sleep(1);
+    }
+    add_endpoint("/23", callback_echo_json);
+
+    for (int i = 0; i < 300; i++) {
+        fprintf(stderr, "%d\n", get_status());
+        sleep(1);
+    }
+
+    return !readFile("test.ini");
 }

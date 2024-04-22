@@ -1,6 +1,6 @@
-#include "api/callbacks.h"
-#include "api/control.h"
-#include "api/socket.h"
+#include "callbacks.h"
+#include "control.h"
+#include "socket.h"
 
 void handle_command(char *buffer) {
     if (strcmp(buffer, "stop") == 0) {

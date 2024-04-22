@@ -2,16 +2,18 @@
 
 int shutdown_callback(const struct _u_request *request, struct _u_response *response, void *user_data) {
     printf("shutdown_callback called");
-    (void)user_data;
-    (void)response;
+    (void)user_data; // UNUSED
+    (void)request; // UNUSED
 
     fprintf(stderr, "shutdown via API");
+    ulfius_set_string_body_response(response, 200, "Bravo six, going dark!");
     exit(420);
 }
 
 int hello_world_callback(const struct _u_request *request, struct _u_response *response, void *user_data) {
     printf("hello_world_callback called");
-    (void)user_data;
+    (void)user_data; // UNUSED
+    (void)request; // UNUSED;
 
     ulfius_set_string_body_response(response, 200, "Hello, world!");
     return U_CALLBACK_CONTINUE;
@@ -19,7 +21,8 @@ int hello_world_callback(const struct _u_request *request, struct _u_response *r
 
 int default_callback(const struct _u_request *request, struct _u_response *response, void *user_data) {
     printf("default_callback called");
-    (void)user_data;
+    (void)user_data; // UNUSED
+    (void)request; // UNUSED;
 
     ulfius_set_string_body_response(response, 404, "Undefined");
     return U_CALLBACK_CONTINUE;
@@ -27,7 +30,7 @@ int default_callback(const struct _u_request *request, struct _u_response *respo
 
 int callback_echo_json(const struct _u_request *request, struct _u_response *response, void *user_data) {
     printf("callback_echo_json called");
-    (void)user_data;
+    (void)user_data; // UNUSED
 
     json_t *json_request_body;
     json_error_t json_error;

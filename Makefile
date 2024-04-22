@@ -1,24 +1,40 @@
-CFLAGS=-Wall -pedantic -x c
+CC=clang
+CFLAGS=-Wall -Wextra -Iinclude -pedantic -fPIC
+LDFLAGS=-L./build
 APIFLAGS=-lulfius -lorcania -lyder -ljansson
+LDLIB=-lc-ini-api $(APIFLAGS)
 
-all: parser api cli
+BUILD_DIR=build
 
-parser:
-	clang $(CFLAGS) -o build/parser src/main.c 
+PARSER=$(BUILD_DIR)/c-ini-parser
+PARSER_API_LIB=$(BUILD_DIR)/libc-ini-api.so
 
-api: 
-	clang $(CFLAGS) -o build/c-ini-parser-api.o -c src/api.c
+EXEC_FILES=src/main.c
+#EXEC_FILES=$(wildcard src/*.c)
+LIB_FILES=$(wildcard src/api/*.c)
 
-cli:
-	clang $(CFLAGS) -o build/c-ini-parser-api.o -c src/cli.c
+EXEC_OBJ=$(EXEC_FILES:src/%.c=build/obj/%.o)
+LIB_OBJ=$(LIB_FILES:src/api/%.c=build/api/%.o)
 
-tests: api-test parser-test cli-test
+all: $(BUILD_DIR) $(PARSER)
+lib: $(BUILD_DIR) $(PARSER_API_LIB)
 
-parser-test:
-	:
+$(PARSER): $(EXEC_OBJ) $(PARSER_API_LIB)
+	$(CC) -o $@ $(EXEC_OBJ) $(LDFLAGS) $(LDLIB)
 
-cli-test:
-	:
+$(PARSER_API_LIB): $(LIB_OBJ)
+	$(CC) -shared -o $@ $(LIB_OBJ)
 
-api-test:
-	clang $(CFLAGS) -o build/test_api src/api.c src/api/* -DAPI_TEST $(APIFLAGS)
+build/obj/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/api/%.o: src/api/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR): 
+	mkdir -p $(BUILD_DIR) $(BUILD_DIR)/api $(BUILD_DIR)/obj
+
+clean:
+	rm -rf $(BUILD_DIR)
+
+.PHONY: clean all lib
