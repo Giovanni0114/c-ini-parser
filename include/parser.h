@@ -6,29 +6,31 @@
 #include <stropts.h>
 #include <uuid/uuid.h>
 
-#include "config.h"
+#define MAX_BUFF_SIZE 1024
+#define MAX_NUM_OF_SECTIONS 1024
 
 typedef enum { TYPE_UNDEFINED = 0, TYPE_VALUE, TYPE_SECTION, TYPE_COMMENT } IniLineType;
 
 typedef struct IniLine {
-    char name[1024];
-    char value[1024];
+    char *name;
+    char *value;
     IniLineType type;
     struct IniLine *nextLineInSection;
 } IniLine;
 
 typedef struct {
-    char displayName[1024];
+    char* displayName;
     uuid_t uuid;
     IniLine *firstLineInSection;
 } Section;
 
 #define MAX_NUM_OF_SECTIONS 1024
-
 static Section configuration[MAX_NUM_OF_SECTIONS];
 
+Section *parseFile(const char *filename, char *target, char **next);
+
 // CREATE
-Section *newSection(const char *name);
+Section *newSection(char *name);
 
 IniLine *addLineInSection(Section *section, IniLine *line);
 IniLine *newLineInSection(Section *section, char *name, char *value);
@@ -56,7 +58,7 @@ bool deleteLine(Section *section, IniLine *line);
 // UTILS
 bool isConfgirationValid(void);
 
-inline bool isSectionEmpty(Section *section) {
+static inline bool isSectionEmpty(Section *section) {
     return section->firstLineInSection == NULL;
 }
 
@@ -64,3 +66,9 @@ static inline bool isSectionEmptyByIndex(int index) {
     return configuration[index].firstLineInSection == NULL;
 }
 
+static inline void printSection(Section sec) {
+    fprintf(stdout, "name: %s\n", sec.displayName);
+    char *uuid_str = malloc(37);
+    uuid_unparse_lower(sec.uuid, uuid_str);
+    fprintf(stdout, "uuid: %s\n", uuid_str);
+}

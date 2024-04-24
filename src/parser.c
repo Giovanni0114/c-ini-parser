@@ -1,13 +1,112 @@
 #include "parser.h"
 
 #include <stdlib.h>
+#include <stdbool.h>
+#include <assert.h>
+#include <errno.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stropts.h>
+
+char* makeSectionName(char* str) {
+    str[strlen(str)-1] = 0;
+    return str + 1;
+}
+
+IniLineType detectLineType(char *line) {
+    if (line[0] == '[' && line[strlen(line) - 1] == ']') return TYPE_SECTION;
+    if (*line == 0 || line[0] == '#' || line[0] == ';') return TYPE_COMMENT;
+    if (strchr(line, '=') != NULL) return TYPE_VALUE;
+    return TYPE_UNDEFINED;
+}
+
+Section *parseFile(const char *filename, char *target, char **next) {
+    Section *config = NULL;
+    FILE *file = fopen(filename, "r");
+    char buffer[MAX_BUFF_SIZE];
+    if (file == NULL) {
+        printf("File error: %s\n", strerror(errno));
+        return config;
+    }
+
+    while (fgets(buffer, MAX_BUFF_SIZE, file)) {
+        if (*buffer == 0 || buffer[0] == '\n') continue; // is empty
+        char *line = strtok(buffer, "\n");
+        while (line[0] == ' ') line++;
+
+        switch (detectLineType(line)) {
+            case TYPE_COMMENT: {
+                break;
+            }
+
+            case TYPE_SECTION: {
+                char *sectionName = makeSectionName(line);
+
+                if (target != NULL){
+                    if (config != NULL) goto finish_type_section;
+                    if (strcmp(sectionName, target) != 0) continue;
+                }
+
+                if (config == NULL) {
+                    config = newSection(sectionName);
+                    break;
+                }
+
+            finish_type_section:
+                if (next != NULL){
+                    *next = strdup(sectionName);
+                    fprintf(stderr, "breaking with next: %s\n", *next);
+                }
+                return config;
+            }
+
+            case TYPE_VALUE: {
+                if (config == NULL && target != NULL) continue;
+                if (config == NULL) {
+                    fprintf(stderr, "record with no section found\n");
+                    config = newSection("unnamed");
+                }
+
+                char *key = strtok(line, "=");
+                char *value = strtok(NULL, "\n");
+
+                if (key == NULL || key[0] == 0 || value == NULL || value[0] == 0) {
+                    fprintf(stderr, "invalid line\n");
+                    continue;
+                }
+
+                newLineInSection(config, key, value);
+                break;
+            }
+
+            case TYPE_UNDEFINED:
+            default:
+                fprintf(stderr, "unidentified line: %s\n", line);
+                continue;
+        }
+    }
+
+    fclose(file);
+    return config;
+}
 
 // CREATE
-Section *newSection(const char *name) {
+Section *newSection(char *name) {
     Section *section = malloc(sizeof(Section));
     uuid_generate_random(section->uuid);
-    section->displayName[sizeof(section->displayName) - 1] = *name;
+    section->displayName = strdup(name);
     return section;
+}
+
+IniLine *newLine(char *name, char *value) {
+    IniLine *record = malloc(sizeof(IniLine));
+    record->type = TYPE_VALUE;
+    record->name = name;
+    record->value = value;
+    record->nextLineInSection = NULL;
+    return record;
 }
 
 Section *getSectionByName(const char *name){
@@ -28,7 +127,30 @@ Section *getSection(Section *section){
     return 0;
 }
 
-// TODO: IniLine *newLineInSection(Section *section, char *name, char *value);
+void appendLineToSection(Section *section, IniLine *line){
+    if (isSectionEmpty(section)) {
+        // fprintf(stderr, "appended %s to section %s\n", line->name, section->displayName);
+        section->firstLineInSection = line;
+        return;
+    }
+
+    IniLine *cur = section->firstLineInSection;
+    do {
+        if (cur->nextLineInSection == NULL) {
+            // fprintf(stderr, "appended %s to %s\n", line->name, cur->name);
+            cur->nextLineInSection = line;
+            return;
+        }
+
+        cur = cur->nextLineInSection;
+    } while (true);
+}
+
+IniLine *newLineInSection(Section *section, char *name, char *value){
+    IniLine *rec = newLine(name, value);
+    appendLineToSection(section, rec);
+    return rec;
+}
 // TODO: int newLine(IniLine *line);
 // TODO: int append(Section *section, IniLine *line);
 // TODO: int insert(Section *section, IniLine *line, int index);
@@ -61,7 +183,7 @@ bool isConfigurationValid(void) {
         IniLine *currentLine = configuration[i].firstLineInSection;
         while (currentLine != NULL) {
             if (currentLine->type == TYPE_UNDEFINED) {
-                return false; 
+                return false;
             }
             currentLine = currentLine->nextLineInSection;
         }

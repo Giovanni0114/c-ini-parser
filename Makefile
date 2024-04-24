@@ -1,7 +1,7 @@
 CC=clang
 CFLAGS=-Wall -Wextra -Iinclude -pedantic -fPIC
 LDFLAGS=-L./build
-APIFLAGS=-lulfius -lorcania -lyder -ljansson
+APIFLAGS=-lulfius -lorcania -lyder -ljansson -luuid
 LDLIB=-lc-ini-api $(APIFLAGS)
 
 BUILD_DIR=build
@@ -9,12 +9,17 @@ BUILD_DIR=build
 PARSER=$(BUILD_DIR)/c-ini-parser
 PARSER_API_LIB=$(BUILD_DIR)/libc-ini-api.so
 
-EXEC_FILES=src/main.c
+EXEC_FILES=src/main.c src/config.c src/parser.c
 #EXEC_FILES=$(wildcard src/*.c)
 LIB_FILES=$(wildcard src/api/*.c)
 
 EXEC_OBJ=$(EXEC_FILES:src/%.c=build/obj/%.o)
 LIB_OBJ=$(LIB_FILES:src/api/%.c=build/api/%.o)
+
+ifeq ($(DEBUG),1)
+CFLAGS += -g
+APIFLAGS += -g
+endif
 
 all: $(BUILD_DIR) $(PARSER)
 lib: $(BUILD_DIR) $(PARSER_API_LIB)
