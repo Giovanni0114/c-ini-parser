@@ -9,8 +9,8 @@ BUILD_DIR=build
 PARSER=$(BUILD_DIR)/c-ini-parser
 PARSER_API_LIB=$(BUILD_DIR)/libc-ini-api.so
 
-EXEC_FILES=src/main.c src/config.c src/parser.c
-#EXEC_FILES=$(wildcard src/*.c)
+# EXEC_FILES=src/main.c src/config.c src/parser.c
+EXEC_FILES=$(wildcard src/*.c)
 LIB_FILES=$(wildcard src/api/*.c)
 
 EXEC_OBJ=$(EXEC_FILES:src/%.c=build/obj/%.o)

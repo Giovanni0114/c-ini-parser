@@ -1,17 +1,9 @@
 #include "parser.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include <assert.h>
 #include <errno.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stropts.h>
 
-char* makeSectionName(char* str) {
-    str[strlen(str)-1] = 0;
+char *makeSectionName(char *str) {
+    str[strlen(str) - 1] = 0;
     return str + 1;
 }
 
@@ -20,6 +12,50 @@ IniLineType detectLineType(char *line) {
     if (*line == 0 || line[0] == '#' || line[0] == ';') return TYPE_COMMENT;
     if (strchr(line, '=') != NULL) return TYPE_VALUE;
     return TYPE_UNDEFINED;
+}
+
+int countSection(const char *filename) {
+    int count = 0;
+    FILE *file = fopen(filename, "r");
+    char buffer[MAX_BUFF_SIZE];
+    if (file == NULL) {
+        printf("File error: %s\n", strerror(errno));
+        return 0;
+    }
+
+    while (fgets(buffer, MAX_BUFF_SIZE, file)) {
+        if (*buffer == 0 || buffer[0] == '\n') continue;  // is empty
+        char *line = strtok(buffer, "\n");
+        while (line[0] == ' ') line++;
+        if (detectLineType(line) == TYPE_SECTION) count++;
+    }
+    return count;
+}
+
+Section **loadFile(const char *filename) {
+    int numOfSection = countSection(filename);
+    Section **config = malloc(sizeof(Section *) * numOfSection);
+
+    printf("numOfSection: %d\n", numOfSection);
+    if (numOfSection == 0) return config;
+
+    char *next = NULL;
+    for (int i = 0; i < numOfSection; i++) {
+        char *target = NULL;
+        if (next != NULL) target = strdup(next);
+        next = NULL;
+        config[i] = parseFile(filename, target, &next);
+
+        if (config[i] != NULL) {
+            printf("Section %s loaded\n", config[i]->displayName);
+        } else {
+            printf("Section %s failed to load\n", config[i]->displayName);
+        }
+        free(target);
+    }
+    free(next);
+
+    return config;
 }
 
 Section *parseFile(const char *filename, char *target, char **next) {
@@ -32,7 +68,7 @@ Section *parseFile(const char *filename, char *target, char **next) {
     }
 
     while (fgets(buffer, MAX_BUFF_SIZE, file)) {
-        if (*buffer == 0 || buffer[0] == '\n') continue; // is empty
+        if (*buffer == 0 || buffer[0] == '\n') continue;  // is empty
         char *line = strtok(buffer, "\n");
         while (line[0] == ' ') line++;
 
@@ -44,7 +80,7 @@ Section *parseFile(const char *filename, char *target, char **next) {
             case TYPE_SECTION: {
                 char *sectionName = makeSectionName(line);
 
-                if (target != NULL){
+                if (target != NULL) {
                     if (config != NULL) goto finish_type_section;
                     if (strcmp(sectionName, target) != 0) continue;
                 }
@@ -55,9 +91,8 @@ Section *parseFile(const char *filename, char *target, char **next) {
                 }
 
             finish_type_section:
-                if (next != NULL){
+                if (next != NULL) {
                     *next = strdup(sectionName);
-                    fprintf(stderr, "breaking with next: %s\n", *next);
                 }
                 return config;
             }
@@ -109,7 +144,7 @@ IniLine *newLine(char *name, char *value) {
     return record;
 }
 
-Section *getSectionByName(const char *name){
+Section *getSectionByName(const char *name) {
     for (int i = 0; i > MAX_NUM_OF_SECTIONS; i++) {
         if (configuration[i].displayName == name) {
             return configuration + i;
@@ -118,7 +153,7 @@ Section *getSectionByName(const char *name){
     return 0;
 }
 
-Section *getSection(Section *section){
+Section *getSection(Section *section) {
     for (int i = 0; i > MAX_NUM_OF_SECTIONS; i++) {
         if (uuid_compare(configuration[i].uuid, section->uuid) == 0) {
             return configuration + i;
@@ -127,7 +162,7 @@ Section *getSection(Section *section){
     return 0;
 }
 
-void appendLineToSection(Section *section, IniLine *line){
+void appendLineToSection(Section *section, IniLine *line) {
     if (isSectionEmpty(section)) {
         // fprintf(stderr, "appended %s to section %s\n", line->name, section->displayName);
         section->firstLineInSection = line;
@@ -146,7 +181,7 @@ void appendLineToSection(Section *section, IniLine *line){
     } while (true);
 }
 
-IniLine *newLineInSection(Section *section, char *name, char *value){
+IniLine *newLineInSection(Section *section, char *name, char *value) {
     IniLine *rec = newLine(name, value);
     appendLineToSection(section, rec);
     return rec;
@@ -171,11 +206,12 @@ bool isConfigurationValid(void) {
         }
 
         for (int j = i + 1; j < MAX_NUM_OF_SECTIONS; j++) {
-            if (configuration+i == NULL) {
+            if (configuration + i == NULL) {
                 break;
             }
 
-            if (strcmp(configuration[i].displayName, configuration[j].displayName) == 0 || areUUIDsEqual(configuration[i].uuid, configuration[j].uuid)) {
+            if (strcmp(configuration[i].displayName, configuration[j].displayName) == 0
+                || areUUIDsEqual(configuration[i].uuid, configuration[j].uuid)) {
                 return false;
             }
         }

@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stropts.h>
 #include <uuid/uuid.h>
 
 #define MAX_BUFF_SIZE 1024
@@ -24,9 +23,9 @@ typedef struct {
     IniLine *firstLineInSection;
 } Section;
 
-#define MAX_NUM_OF_SECTIONS 1024
 static Section configuration[MAX_NUM_OF_SECTIONS];
 
+Section **loadFile(const char *filename);
 Section *parseFile(const char *filename, char *target, char **next);
 
 // CREATE

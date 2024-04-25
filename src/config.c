@@ -21,6 +21,6 @@ void initConfig(Config *config, const char *filename) {
     config->vaccumModePeriod = V_PERIOD_NONE;
     config->ensureExist = NULL;
 
-    Section *configStruct = parseFile(filename, NULL, NULL);
-    printSection(*configStruct);
+    Section **configStruct = loadFile(filename);
+    printSection(*configStruct[0]);
 }

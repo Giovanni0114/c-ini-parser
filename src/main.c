@@ -1,8 +1,10 @@
-#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stropts.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <errno.h>
 
 #include "config.h"
 #include "control.h"
@@ -10,7 +12,11 @@
 
 int detectInputOnStdin(void) {
     int input;
-    return (ioctl(0, I_NREAD, &input) == 0 && input > 0);
+    if (ioctl(STDIN_FILENO, FIONREAD, &input) != 0){
+        printf("STDIN error: %s\n", strerror(errno));
+        return 0;
+    }
+    return input > 0;
 }
 
 int main(void) {
@@ -24,24 +30,8 @@ int main(void) {
     Config *config = NULL;
     initConfig(config, "config.ini");
 
-    char *next = NULL;
-    Section *read = parseFile("test.ini", NULL, &next);
-    printf("-> next: %s\n", next);
-    if (read != NULL) {
-        printSection(*read);
-        free(read);
-    }
-
-    while (next != NULL) {
-        char *target = strdup(next);
-        next = NULL;
-        read = parseFile("test.ini", target, &next);
-        if (read != NULL) {
-            printSection(*read);
-            free(read);
-        }
-        free(target);
-    }
+    Section **content = loadFile("test.ini");
+    printSection(*content[0]);
 
     return 1;
 }
