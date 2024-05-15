@@ -1,4 +1,6 @@
 #pragma once
+
+#define CONFIG_FILE_PATH "config.ini"
 typedef enum {
     V_MODE_NONE = 0,
     V_MODE_AUTO,
@@ -19,9 +21,7 @@ typedef struct {
     char **ensureExist;
 } Config;
 
-// Config config;
-
-void initConfig(Config *config, const char *filename);
+void initConfig(Config *config);
 void freeConfig(Config *config);
 
 // idea here to add -c option to console for read config

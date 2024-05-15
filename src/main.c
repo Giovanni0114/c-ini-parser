@@ -28,7 +28,7 @@ int main(void) {
     }
 
     Config *config = NULL;
-    initConfig(config, "config.ini");
+    initConfig(config);
 
     Section **content = loadFile("test.ini");
     printSection(*content[0]);

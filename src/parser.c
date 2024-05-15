@@ -59,12 +59,12 @@ Section **loadFile(const char *filename) {
 }
 
 Section *parseFile(const char *filename, char *target, char **next) {
-    Section *config = NULL;
+    Section *section = NULL;
     FILE *file = fopen(filename, "r");
     char buffer[MAX_BUFF_SIZE];
     if (file == NULL) {
         printf("File error: %s\n", strerror(errno));
-        return config;
+        return section;
     }
 
     while (fgets(buffer, MAX_BUFF_SIZE, file)) {
@@ -81,12 +81,12 @@ Section *parseFile(const char *filename, char *target, char **next) {
                 char *sectionName = makeSectionName(line);
 
                 if (target != NULL) {
-                    if (config != NULL) goto finish_type_section;
+                    if (section != NULL) goto finish_type_section;
                     if (strcmp(sectionName, target) != 0) continue;
                 }
 
-                if (config == NULL) {
-                    config = newSection(sectionName);
+                if (section == NULL) {
+                    section = newSection(sectionName);
                     break;
                 }
 
@@ -94,14 +94,14 @@ Section *parseFile(const char *filename, char *target, char **next) {
                 if (next != NULL) {
                     *next = strdup(sectionName);
                 }
-                return config;
+                return section;
             }
 
             case TYPE_VALUE: {
-                if (config == NULL && target != NULL) continue;
-                if (config == NULL) {
+                if (section == NULL && target != NULL) continue;
+                if (section == NULL) {
                     fprintf(stderr, "record with no section found\n");
-                    config = newSection("unnamed");
+                    section = newSection("unnamed");
                 }
 
                 char *key = strtok(line, "=");
@@ -112,7 +112,7 @@ Section *parseFile(const char *filename, char *target, char **next) {
                     continue;
                 }
 
-                newLineInSection(config, key, value);
+                newLineInSection(section, key, value);
                 break;
             }
 
@@ -124,7 +124,7 @@ Section *parseFile(const char *filename, char *target, char **next) {
     }
 
     fclose(file);
-    return config;
+    return section;
 }
 
 // CREATE
@@ -138,8 +138,8 @@ Section *newSection(char *name) {
 IniLine *newLine(char *name, char *value) {
     IniLine *record = malloc(sizeof(IniLine));
     record->type = TYPE_VALUE;
-    record->name = name;
-    record->value = value;
+    record->name = strdup(name);
+    record->value = strdup(value);
     record->nextLineInSection = NULL;
     return record;
 }
@@ -162,6 +162,17 @@ Section *getSection(Section *section) {
     return 0;
 }
 
+IniLine *getLineByName(Section *section, char *name){
+    IniLine *current = section->firstLineInSection;
+
+    while (current != NULL) {
+        if (strcmp(current->name, name) == 0) return current;
+        current = current->nextLineInSection;
+    }
+
+    return NULL;
+}
+
 void appendLineToSection(Section *section, IniLine *line) {
     if (isSectionEmpty(section)) {
         // fprintf(stderr, "appended %s to section %s\n", line->name, section->displayName);
@@ -182,21 +193,10 @@ void appendLineToSection(Section *section, IniLine *line) {
 }
 
 IniLine *newLineInSection(Section *section, char *name, char *value) {
+    fprintf(stderr, "  -- appending %s in %s\n", name, section->displayName);
     IniLine *rec = newLine(name, value);
     appendLineToSection(section, rec);
     return rec;
-}
-// TODO: int newLine(IniLine *line);
-// TODO: int append(Section *section, IniLine *line);
-// TODO: int insert(Section *section, IniLine *line, int index);
-// TODO: int deleteById(Section *section, char *name);
-// TODO: int deleteByName(Section *section, char *name);
-// TODO: int deleteObject(Section *section, IniLine *line);
-// TODO: IniLine *getLineByIndex(Section *section, int index);
-// TODO: IniLine *getLineByName(Section *section, char *name);
-
-static bool areUUIDsEqual(uuid_t uuid1, uuid_t uuid2) {
-    return uuid_compare(uuid1, uuid2) == 0;
 }
 
 bool isConfigurationValid(void) {

@@ -71,3 +71,8 @@ static inline void printSection(Section sec) {
     uuid_unparse_lower(sec.uuid, uuid_str);
     fprintf(stdout, "uuid: %s\n", uuid_str);
 }
+
+// uuid utils
+bool areUUIDsEqual(uuid_t uuid1, uuid_t uuid2) {
+    return uuid_compare(uuid1, uuid2) == 0;
+}
