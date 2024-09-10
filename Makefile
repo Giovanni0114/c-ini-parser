@@ -39,6 +39,9 @@ build/api/%.o: src/api/%.c
 $(BUILD_DIR): 
 	mkdir -p $(BUILD_DIR) $(BUILD_DIR)/api $(BUILD_DIR)/obj
 
+install: lib
+	cp $(PARSER_API_LIB) /usr/lib
+
 clean:
 	rm -rf $(BUILD_DIR)
 

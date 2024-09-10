@@ -18,7 +18,7 @@ typedef struct IniLine {
 } IniLine;
 
 typedef struct {
-    char* displayName;
+    char *displayName;
     uuid_t uuid;
     IniLine *firstLineInSection;
 } Section;
@@ -28,7 +28,7 @@ static Section configuration[MAX_NUM_OF_SECTIONS];
 Section **loadFile(const char *filename);
 Section *parseFile(const char *filename, char *target, char **next);
 
-// CREATE
+// CRUD create
 Section *newSection(char *name);
 
 IniLine *addLineInSection(Section *section, IniLine *line);
@@ -36,18 +36,18 @@ IniLine *newLineInSection(Section *section, char *name, char *value);
 
 void appendLineToSection(Section *section, IniLine *line);
 
-// READ
+// CRUD read
 Section *getSectionByName(const char *name);
 Section *getSection(Section *section);
 
 IniLine *getLineByIndex(Section *section, int index);
 IniLine *getLineByName(Section *section, char *name);
 
-// UPDATES
+// CRUD updates
 void updateSectionName(Section *section, const char *newDisplayName);
 void updateLineValue(Section *section, IniLine *line, const char *newValue);
 
-// DELETE
+// CRUD delete
 bool deleteSectionByName(const char *name);
 bool deleteSection(Section *section);
 
@@ -56,23 +56,10 @@ bool deleteLine(Section *section, IniLine *line);
 
 // UTILS
 bool isConfgirationValid(void);
-
-static inline bool isSectionEmpty(Section *section) {
-    return section->firstLineInSection == NULL;
-}
-
-static inline bool isSectionEmptyByIndex(int index) {
-    return configuration[index].firstLineInSection == NULL;
-}
-
-static inline void printSection(Section sec) {
-    fprintf(stdout, "name: %s\n", sec.displayName);
-    char *uuid_str = malloc(37);
-    uuid_unparse_lower(sec.uuid, uuid_str);
-    fprintf(stdout, "uuid: %s\n", uuid_str);
-}
+bool isSectionEmpty(Section *section);
+bool isSectionEmptyByIndex(int index);
+int countLinesInSection(const Section *section);
+void printSection(Section sec);
 
 // uuid utils
-bool areUUIDsEqual(uuid_t uuid1, uuid_t uuid2) {
-    return uuid_compare(uuid1, uuid2) == 0;
-}
+bool areUUIDsEqual(uuid_t uuid1, uuid_t uuid2);

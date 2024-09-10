@@ -15,6 +15,7 @@ void assignDefault(Config *config) {
     config->vaccumMode = V_MODE_NONE;
     config->vaccumModePeriod = V_PERIOD_NONE;
     config->ensureExist = NULL;
+    config->path = "";
 }
 
 // TODO: requires changing logic

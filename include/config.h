@@ -19,6 +19,7 @@ typedef struct {
     VaccumModePeriod vaccumModePeriod;
     int port;
     char **ensureExist;
+    char *path;
 } Config;
 
 void initConfig(Config *config);

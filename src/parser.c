@@ -162,7 +162,7 @@ Section *getSection(Section *section) {
     return 0;
 }
 
-IniLine *getLineByName(Section *section, char *name){
+IniLine *getLineByName(Section *section, char *name) {
     IniLine *current = section->firstLineInSection;
 
     while (current != NULL) {
@@ -199,6 +199,8 @@ IniLine *newLineInSection(Section *section, char *name, char *value) {
     return rec;
 }
 
+// UTILS
+
 bool isConfigurationValid(void) {
     for (int i = 0; i < MAX_NUM_OF_SECTIONS; i++) {
         if (configuration + i == NULL) {
@@ -227,3 +229,36 @@ bool isConfigurationValid(void) {
 
     return true;
 }
+
+bool isSectionEmptyByIndex(int index) {
+    return configuration[index].firstLineInSection == NULL;
+}
+
+void printSection(Section sec) {
+    fprintf(stdout, "name: %s\n", sec.displayName);
+    char *uuid_str = malloc(37);
+    uuid_unparse_lower(sec.uuid, uuid_str);
+    fprintf(stdout, "uuid: %s\n", uuid_str);
+}
+
+bool areUUIDsEqual(uuid_t uuid1, uuid_t uuid2) {
+    return uuid_compare(uuid1, uuid2) == 0;
+}
+
+bool isSectionEmpty(Section *section) {
+    return section->firstLineInSection == NULL;
+}
+
+
+int countLinesInSection(const Section *section){
+    int count = 0;
+
+    IniLine *line = section->firstLineInSection;
+    while (line != NULL){
+        count++;
+        line = line->nextLineInSection;
+    }
+
+    return count;
+}
+

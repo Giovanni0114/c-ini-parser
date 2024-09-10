@@ -23,7 +23,6 @@ This mode is able to publish vales to be read from ~~d-bus or~~ local http by so
  - 01-prototype: version that is able to build and not much more
  - 02-prototype: version with working parser and config
  - 03-prototype: version with working stdin input and organized output
- - 03-prototype: version with working stdin input and organized output
 
 ### alpha:
 

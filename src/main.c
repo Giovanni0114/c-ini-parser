@@ -19,19 +19,38 @@ int detectInputOnStdin(void) {
     return input > 0;
 }
 
-int main(void) {
+void print_usage(const char *program_name) {
+    printf(
+        "Usage: %s -c /path/to/ini/file\nAlternativly give it to input: \"%s </path/to/ini/file\" "
+        "or \"cat /path/to/ini/file | %s\"\n",
+        program_name, program_name, program_name);
+}
+
+int main(int argc, char *argv[]) {
+    char path[1024];
+
+    Config config;
+    initConfig(&config);
+
     if (detectInputOnStdin()) {
         char line[1024];
         while (fgets(line, sizeof(line), stdin)) {
             printf("Read line: %s", line);
         }
+    } else if (argc >= 3) {
+        strncpy(path, argv[2], 1024);
+    } else if (strcmp(path, "0") == 0) {
+        strncpy(path, config.path, 1024);
+    } else {
+        print_usage(argv[0]);
+        return 1;
     }
 
-    Config *config = NULL;
-    initConfig(config);
-
-    Section **content = loadFile("test.ini");
+    Section **content = loadFile(path);
     printSection(*content[0]);
+
+    // todo:
+    // all the shit lol
 
     return 1;
 }
