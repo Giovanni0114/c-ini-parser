@@ -1,4 +1,4 @@
-#include "config.h"
+#include "types/app_config.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -10,16 +10,21 @@
 
 #include "parser.h"
 
-void assignDefault(Config *config) {
-    config->port = -1;
-    config->vaccumMode = V_MODE_NONE;
-    config->vaccumModePeriod = V_PERIOD_NONE;
-    config->ensureExist = NULL;
-    config->path = "";
+AppConfig *createEmptyAppConfig(void){
+    return (AppConfig *)malloc(sizeof(AppConfig));
 }
 
-// TODO: requires changing logic
-int getIntFromLine(IniLine *line) {
+AppConfig *createDefaultAppConfig(void) {
+    AppConfig *appConfig = createEmptyAppConfig();
+
+    appConfig->port = 3000;
+    appConfig->ensureExist = NULL;
+    appConfig->path = "";
+
+    return appConfig;
+}
+
+bool getIntFromLine(Line *line, int *ref) {
     char *end;
     int number;
 
@@ -29,12 +34,14 @@ int getIntFromLine(IniLine *line) {
 
     if (end == line->value) {
         fprintf(stderr, "No digits were found\n");
-        return -1;
+        return false;
     }
-    return number;
+
+    *ref = number;
+    return true;
 }
 
-void splitAndStore(char *input, Config *config) {
+void splitAndStore(char *input, AppConfig *config) {
     char **placeholderForEnsured;
     int index = 0;
     const char delimiter[] = ",";
@@ -68,14 +75,8 @@ void splitAndStore(char *input, Config *config) {
     config->ensureExist = placeholderForEnsured;
 }
 
-void initConfig(Config *config) {
-    config = malloc(sizeof(Config));
-    if (config == NULL) {
-        assert(0 && "BUY MORE RAM");
-        return;
-    }
-
-    assignDefault(config);
+void initConfig(AppConfig *config) {
+    config = createDefaultAppConfig();
 
     Section **configStruct = loadFile(CONFIG_FILE_PATH);
 
@@ -84,20 +85,19 @@ void initConfig(Config *config) {
         return;
     }
 
-    IniLine *portLine = getLineByName(configStruct[0], "Port");
-    IniLine *ensureExist = getLineByName(configStruct[0], "EnsureExist");
+    // General
+    Line *portLine = getLineByName(configStruct[0], "Port");
+    Line *ensureExist = getLineByName(configStruct[0], "EnsureExist");
 
-    if (portLine == NULL || getIntFromLine(portLine) == -1) {
+    if (portLine == NULL || !getIntFromLine(portLine, &config->port)) {
         fprintf(stderr, "unable to find Port in config, using default 3000\n");
         config->port = 3000;
-    } else {
-        config->port = getIntFromLine(portLine);
-    }
+    } 
 
     if (ensureExist == NULL) {
         fprintf(stderr, "unable to find EnsureExist in config, skipping\n");
         return;
-    } else {
-        splitAndStore(ensureExist->value, config);
     }
+
+    splitAndStore(ensureExist->value, config);
 }
